@@ -1,0 +1,80 @@
+# Red-team tests with --runxfail, one line per failure
+# date: 2026-11-10T12:53:00-05:00
+# host: Linux 6.11.2-amd64 x86_64
+# python: Python 3.14.6
+# torch: 2.15.0+cu132
+# cwd: <repo>
+# command: PYTHONPATH=src python -m pytest -p no:cacheprovider --runxfail --tb=line -q tests/test_redteam_spec_gaps.py tests/test_redteam_spec_gaps_round2.py tests/test_redteam_paxos_fuzz.py
+
+FFFFFFFFFFFFFFFFFF....FFFFFFFFFFF.............                           [100%]
+=================================== FAILURES ===================================
+<repo>/tests/test_redteam_spec_gaps.py:146: assert (200 < 500 and 500 < 500)
+<repo>/tests/test_redteam_spec_gaps.py:164: assert False
+<repo>/tests/test_redteam_spec_gaps.py:177: Failed: DID NOT RAISE <class 'elasticml.state.InvalidGradient'>
+<repo>/tests/test_redteam_spec_gaps.py:192: AssertionError: assert {'__elasticml...', 'victim-1'} == {'__elasticml...2NhaAMV3Cn0='}
+<repo>/tests/test_redteam_spec_gaps.py:222: AssertionError: rejection allocated 32.0 MB
+<repo>/tests/test_redteam_spec_gaps.py:246: AssertionError: assert 'pending' == 'applied'
+<repo>/tests/test_redteam_spec_gaps.py:265: AssertionError: assert 'stale' == 'applied'
+<repo>/src/elasticml/gradient_reducer.py:143: ValueError: gradient tensor sets and shapes must match within a reducer batch
+<repo>/tests/test_redteam_spec_gaps.py:299: Failed: DID NOT RAISE <class 'ValueError'>
+<repo>/tests/test_redteam_spec_gaps.py:325: assert 2 == 1
+<repo>/tests/test_redteam_spec_gaps.py:344: AssertionError: assert 'pending' != 'pending'
+<repo>/tests/test_redteam_spec_gaps.py:366: AssertionError: duplicates
+<repo>/tests/test_redteam_spec_gaps.py:379: Failed: DID NOT RAISE <class 'ValueError'>
+<repo>/tests/test_redteam_spec_gaps.py:400: Failed: DID NOT RAISE <class 'ValueError'>
+<repo>/tests/test_redteam_spec_gaps.py:413: AssertionError: {'3.12', '3.14'}
+<repo>/tests/test_redteam_spec_gaps.py:421: AssertionError: assert False
+<repo>/tests/test_redteam_spec_gaps.py:429: assert False
+<repo>/tests/test_redteam_spec_gaps.py:446: AssertionError: {'missing': ['source_commit', 'script', 'data_selection_seed', 'fault_schedule_seed', 'p50', 'p95', ...], 'raw_log_present': False}
+<repo>/tests/test_redteam_spec_gaps_round2.py:77: AssertionError: slot 1 chose v1 and then v2
+<repo>/tests/test_redteam_spec_gaps_round2.py:102: AssertionError: ['stale', 'stale', 'stale', 'stale', 'stale', 'stale']
+<repo>/tests/test_redteam_spec_gaps_round2.py:118: AssertionError: {'aggregation_enabled': True, 'model_version': 2, 'status': 'stale'}
+<repo>/tests/test_redteam_spec_gaps_round2.py:145: assert False
+<repo>/tests/test_redteam_spec_gaps_round2.py:175: assert (0 == 1)
+<repo>/tests/test_redteam_spec_gaps_round2.py:195: assert 0 == 2
+<repo>/tests/test_redteam_spec_gaps_round2.py:206: AssertionError: assert 'healthy' in {'bad': {'description': 'Reduced school fleet, request loss, worker churn and an occasional peer fault.', 'label': 'Ba..., slow peers, crashes and minority partitions.', 'label': 'Terrible day', 'loss': [10, 30], 'partitions': [1, 3], ...}}
+<repo>/tests/test_redteam_spec_gaps_round2.py:219: assert 2444800 <= (60000 - 5000)
+<repo>/tests/test_redteam_spec_gaps_round2.py:234: AssertionError: no MS3-model run with injected faults
+<repo>/tests/test_redteam_spec_gaps_round2.py:248: assert True is False
+<repo>/tests/test_redteam_spec_gaps_round2.py:265: AssertionError: (3, 6)
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  <repo>/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_redteam_spec_gaps.py::test_rt08_reducer_decoder_rejects_int8_scale_overflow
+  <repo>/src/elasticml/quantization.py:65: RuntimeWarning: overflow encountered in multiply
+    decoded[name] = value.astype(np.float32) * np.float32(scalar)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_redteam_spec_gaps.py::test_rt01_overflowing_cohort_member_cannot_stall_honest_workers
+FAILED tests/test_redteam_spec_gaps.py::test_rt02_accepted_updates_keep_model_finite_and_readable
+FAILED tests/test_redteam_spec_gaps.py::test_rt03_reserved_aggregate_prefix_rejected_before_proposal
+FAILED tests/test_redteam_spec_gaps.py::test_rt03_live_and_recovered_replicas_deduplicate_identically
+FAILED tests/test_redteam_spec_gaps.py::test_rt04_oversized_decoded_payload_rejected_before_large_allocation
+FAILED tests/test_redteam_spec_gaps.py::test_rt05_surviving_workers_commit_after_cohort_member_crashes
+FAILED tests/test_redteam_spec_gaps.py::test_rt06_future_base_submission_cannot_poison_reducer
+FAILED tests/test_redteam_spec_gaps.py::test_rt07_wrong_shape_member_rejected_without_blocking_cell
+FAILED tests/test_redteam_spec_gaps.py::test_rt08_reducer_decoder_rejects_int8_scale_overflow
+FAILED tests/test_redteam_spec_gaps.py::test_rt09_worker_contribution_applied_at_most_once_across_reducer_failover
+FAILED tests/test_redteam_spec_gaps.py::test_rt10_upstream_rejection_gives_workers_a_terminal_status
+FAILED tests/test_redteam_spec_gaps.py::test_rt11_reported_duplicate_and_drop_counts_survive_restart
+FAILED tests/test_redteam_spec_gaps.py::test_rt12_peer_mode_requires_authentication
+FAILED tests/test_redteam_spec_gaps.py::test_rt13_loader_rejects_files_that_do_not_match_published_hashes
+FAILED tests/test_redteam_spec_gaps.py::test_rt14a_ci_matrix_covers_every_supported_python
+FAILED tests/test_redteam_spec_gaps.py::test_rt14b_retained_evidence_matches_the_declared_commit
+FAILED tests/test_redteam_spec_gaps.py::test_rt14c_documented_hokea_net_backend_is_implemented
+FAILED tests/test_redteam_spec_gaps.py::test_rt14d_selected_run_evidence_records_every_section7_field
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt17_single_voter_rollback_preserves_single_value_per_slot
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt18_slow_but_live_worker_eventually_contributes
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt19_job_completion_reaches_workers_through_reducers
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt20_equal_inputs_give_equal_model_regardless_of_arrival_timing
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt21_acknowledged_update_survives_restart_for_every_valid_quorum_config
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt22_every_voter_assigns_a_worker_to_the_same_cell
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt23_dashboard_matches_section8_profiles_and_timing_model
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt24_unique_committed_examples_cannot_exceed_training_split
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt25_ms3_model_has_equal_seed_fault_scenario_evidence
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt26_hokea_runtime_does_not_enable_experimental_compaction
+FAILED tests/test_redteam_spec_gaps_round2.py::test_rt27_local_hokea_suite_cluster_size_matches_image_topology
+29 failed, 17 passed, 2 warnings in 4.88s

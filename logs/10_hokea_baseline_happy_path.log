@@ -1,0 +1,110 @@
+# HOKEA baseline: existing hokea_tests happy path
+# date: 2026-11-10T12:32:34-05:00
+# command: PYTHONPATH=src python -m pytest -p no:cacheprovider -v -s hokea_tests/test_elasticml.py::test_happy_path_trains_and_converges
+
+============================= test session starts ==============================
+platform linux -- Python 3.14.6, pytest-8.4.2, pluggy-1.7.0 -- <repo>/.venv/bin/python
+rootdir: <repo>
+configfile: pyproject.toml
+plugins: cov-6.3.0, anyio-4.16.0, hokea-0.1.0
+collecting ... collected 1 item
+
+hokea_tests/test_elasticml.py::test_happy_path_trains_and_converges ERROR
+
+==================================== ERRORS ====================================
+____________ ERROR at setup of test_happy_path_trains_and_converges ____________
+
+hokea_cluster = <hokea.cluster.Cluster object at 0x7f9dcf4d70e0>
+
+    @pytest.fixture
+    def cluster(hokea_cluster):
+        """Start HOKEA with the same bounded timeout used for cluster creation.
+    
+        HOKEA's bundled fixture fixes health polling at 60 seconds even when the
+        cluster was configured with a longer ``up_timeout``.  Docker Desktop can
+        take several minutes to materialize 23 copies of the CPU image locally.
+        """
+        with hokea_cluster as running:
+>           running.wait_healthy(timeout=600)
+
+conftest.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hokea.cluster.Cluster object at 0x7f9dcf4d70e0>, timeout = 600
+
+    def wait_healthy(self, timeout: float = 60):
+        """Poll every node's GET /health until all answer 200, or raise with
+        the failing nodes' recent logs."""
+        deadline = time.monotonic() + timeout
+        pending = {n.index: n for n in self._nodes}
+        while pending and time.monotonic() < deadline:
+            for i, node in list(pending.items()):
+                try:
+                    r = requests.get(f"{node.url}/health", timeout=2)
+                    if r.status_code == 200:
+                        del pending[i]
+                except requests.RequestException:
+                    pass
+            if pending:
+                time.sleep(0.5)
+        if pending:
+            detail = "\n\n".join(
+                f"--- {n.name} last logs ---\n{n.logs()}" for n in pending.values()
+            )
+>           raise TimeoutError(
+                f"nodes not healthy after {timeout}s: "
+                f"{sorted(pending)}\n{detail}"
+            )
+E           TimeoutError: nodes not healthy after 600s: [1, 2, 3]
+E           --- hokea-elasticml-local-node1 last logs ---
+E           Traceback (most recent call last):
+E             File "/usr/local/bin/elasticml-hokea-node", line 8, in <module>
+E               sys.exit(main())
+E                        ^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 570, in main
+E               raise SystemExit(run())
+E                                ^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 380, in run
+E               topology = hokea_topology()
+E                          ^^^^^^^^^^^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 318, in hokea_topology
+E               raise ValueError(f"HOKEA must provide exactly {expected_pods} pods with a valid NODE_ID")
+E           ValueError: HOKEA must provide exactly 6 pods with a valid NODE_ID
+E           
+E           
+E           --- hokea-elasticml-local-node2 last logs ---
+E           Traceback (most recent call last):
+E             File "/usr/local/bin/elasticml-hokea-node", line 8, in <module>
+E               sys.exit(main())
+E                        ^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 570, in main
+E               raise SystemExit(run())
+E                                ^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 380, in run
+E               topology = hokea_topology()
+E                          ^^^^^^^^^^^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 318, in hokea_topology
+E               raise ValueError(f"HOKEA must provide exactly {expected_pods} pods with a valid NODE_ID")
+E           ValueError: HOKEA must provide exactly 6 pods with a valid NODE_ID
+E           
+E           
+E           --- hokea-elasticml-local-node3 last logs ---
+E           Traceback (most recent call last):
+E             File "/usr/local/bin/elasticml-hokea-node", line 8, in <module>
+E               sys.exit(main())
+E                        ^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 570, in main
+E               raise SystemExit(run())
+E                                ^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 380, in run
+E               topology = hokea_topology()
+E                          ^^^^^^^^^^^^^^^^
+E             File "/usr/local/lib/python3.12/site-packages/elasticml/hokea_node.py", line 318, in hokea_topology
+E               raise ValueError(f"HOKEA must provide exactly {expected_pods} pods with a valid NODE_ID")
+E           ValueError: HOKEA must provide exactly 6 pods with a valid NODE_ID
+
+../hokea/src/hokea/cluster.py:296: TimeoutError
+=========================== short test summary info ============================
+ERROR hokea_tests/test_elasticml.py::test_happy_path_trains_and_converges - T...
+========================= 1 error in 717.60s (0:11:57) =========================
+# note: the run ended by itself with the ERROR above (HOKEA wait_healthy). All three voter containers exited with code 1.

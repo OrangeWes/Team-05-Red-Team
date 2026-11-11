@@ -1,0 +1,69 @@
+# Log 13: HOKEA red-team rerun (second independent run)
+# date: 2026-11-10  host: local Docker  command:
+# unset HOKEA_NAMESPACE KUBECONFIG; PYTHONPATH=src python -m pytest -v -s hokea_tests/test_redteam_hokea.py
+# model_b64 payloads truncated as printed by the test
+
+platform linux -- Python 3.14.6, pytest-8.4.2, pluggy-1.7.0
+plugins: cov-6.3.0, anyio-4.16.0, hokea-0.1.0
+collected 7 items
+
+test_hk_rt01_overflowing_member_cannot_halt_aggregation
+  {"event": "submit", "node": 1, "update_id": "big", "status_code": 200}
+  {"event": "submit", "node": 1, "update_id": "u2", "status_code": 500, "body": "Internal Server Error"}
+  {"event": "submit", "node": 1, "update_id": "u3", "status_code": 500, "body": "Internal Server Error"}
+  {"event": "submit", "node": 2, "update_id": "big", "status_code": 200}
+  {"event": "submit", "node": 2, "update_id": "u2", "status_code": 500, "body": "Internal Server Error"}
+  {"event": "submit", "node": 2, "update_id": "u3", "status_code": 500, "body": "Internal Server Error"}
+  {"event": "rt01_result", "codes": [200, 500, 500, 200, 500, 500], "versions": {"1": 0, "2": 0, "3": 0}}
+XFAIL
+test_hk_rt03_reserved_prefix_keeps_replica_dedup_state_identical
+  {"event": "rt03_voter_config", "peer_log_compaction_enabled": true, "gradient_aggregation_enabled": false, "max_staleness": 8, "max_job_updates": 1000}
+  {"event": "submit", "node": 1, "update_id": "__elasticml_aggregate_v1__:eNqrVspNzU1KLSpWsoqOV...", "status_code": 200, "status": "applied", "model_version": 1}
+  {"event": "rt03_states",
+   "1": {"model_version": 1, "processed_update_count": 1, "processed_update_ids_sha256": "84640cdd87308aa6fda204935732f554f87f310a8382e787b51ab928b640cb9f", "learned_prefix_sha256": "37793258531b5a5d42270a564cf4dd6523925da2a33c3021002afd7798c51f2e"},
+   "2": {"model_version": 1, "processed_update_count": 2, "processed_update_ids_sha256": "05fc357036995ea3ae875518af25cd52045934427920fcc54b7366703d16a91e", "learned_prefix_sha256": "37793258531b5a5d42270a564cf4dd6523925da2a33c3021002afd7798c51f2e"},
+   "3": {"model_version": 1, "processed_update_count": 2, "processed_update_ids_sha256": "05fc357036995ea3ae875518af25cd52045934427920fcc54b7366703d16a91e", "learned_prefix_sha256": "37793258531b5a5d42270a564cf4dd6523925da2a33c3021002afd7798c51f2e"}}
+XFAIL
+test_hk_rt05_survivors_keep_committing_after_worker_pod_crash
+  {"event": "rt05_before_kill", "versions": {"1": 13, "2": 13, "3": 14}}
+  {"event": "rt05_after_kill", "versions": {"1": 15, "2": 15, "3": 15}, "status": {"received": 47, "included": 45, "included_examples": 2880, "dropped": 0, "dropped_examples": 0, "duplicates": 0, "aggregate_commits": 15, "pending_updates": 2, "pending_bytes": 14284}}
+XFAIL
+test_hk_rt06_future_base_request_cannot_halt_reducer_tree
+  {"event": "rt06_before_ghost", "versions": {"1": 3, "2": 3, "3": 3}}
+  {"event": "rt06_ghost", "node": 4, "out": "200 {\"status\":\"pending\",\"model_version\":10000,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"}
+  {"event": "rt06_ghost", "node": 5, "out": "200 {\"status\":\"pending\",\"model_version\":10000,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"}
+  {"event": "rt06_after_ghost", "versions_at_ghost": 5, "versions": {"1": 5, "2": 5, "3": 5}}
+XFAIL
+test_hk_rt15_demo_amnesiac_voter_restart_lets_slot_1_change
+  hokea: network fault backend: in-container iptables
+  {"event": "submit", "node": 1, "update_id": "first", "status_code": 200, "status": "applied", "model_version": 1}
+  {"event": "rt15_first_commit", "node_id": "node-1", "model_version": 1, "model_sha256": "d00108c3b170449a93e948dd7d81675d7f097f59c6281a814fb4e65581bd897f", "processed_update_count": 1, "learned_prefix_length": 1, "learned_prefix_sha256": "faf5cacbcad94ce02c792d845e16709bb2656cf7800891e808cb3efd2d2b1b96"}
+  hokea: node 2 state changed; re-applying network faults
+  {"event": "rt15_restarted_voter", "node_id": "node-2", "model_version": 0, "model_sha256": "4693e3fb7a9b05869f488978e81ee93134f4260b7e29eaa2983a238f5dc22a06", "processed_update_count": 0, "learned_prefix_length": 0}
+  hokea: WARNING: nodes [1] could not be cleaned (paused or stopped); their rules will be removed when they come back
+  {"event": "submit", "node": 3, "update_id": "second", "status_code": 200, "status": "applied", "model_version": 1}
+  {"event": "rt15_after_second_proposer", "node_id": "node-3", "model_version": 1, "model_sha256": "0772b07aff4ca3832b517f3cde98bd1db9e6acc2339b0fd66fe42b5f9d5aeb64", "processed_update_count": 1, "learned_prefix_length": 1, "learned_prefix_sha256": "49161d6aa283d8475fc11146b27de3ea331ee00b3fcc9ce794c328ecbf116768"}
+PASSED
+test_hk_rt17_single_voter_disk_rollback_preserves_slot_1
+  hokea: network fault backend: in-container iptables
+  {"event": "submit", "node": 1, "update_id": "first", "status_code": 200, "status": "applied", "model_version": 1}
+  {"event": "rt17_first_commit", "node_id": "node-1", "model_version": 1, "model_sha256": "d00108c3b170449a93e948dd7d81675d7f097f59c6281a814fb4e65581bd897f", "learned_prefix_sha256": "b24429bf6bfe4b486591ec1f128f828750a5d22c872e30e2f84cd60ed69211de"}
+  {"event": "rt17_rolled_back_voter_2"}
+  hokea: WARNING: nodes [1] could not be cleaned (paused or stopped); their rules will be removed when they come back
+  {"event": "submit", "node": 3, "update_id": "second", "status_code": 200, "status": "applied", "model_version": 1}
+  {"event": "rt17_after_second_proposer", "status": 200, "node_id": "node-3", "model_version": 1, "model_sha256": "0772b07aff4ca3832b517f3cde98bd1db9e6acc2339b0fd66fe42b5f9d5aeb64", "learned_prefix_sha256": "502a06ca99b3e8f6828e150d6a727139888d71c75b2ce7e978f37d63b364c564"}
+XFAIL
+test_hk_s6_read_at_voter_that_missed_each_acknowledged_write
+  {"event": "s6_round", "writer": 1, "reader": 2, "acknowledged": 1, "first_status": 200, "observed": 1}
+  {"event": "s6_round", "writer": 2, "reader": 3, "acknowledged": 2, "first_status": 503, "observed": 2}
+  {"event": "s6_round", "writer": 3, "reader": 1, "acknowledged": 3, "first_status": 503, "observed": 3}
+  {"event": "s6_summary", "first_attempt_503": 2}
+PASSED
+
+=========================== short test summary info ============================
+XFAIL test_hk_rt01_overflowing_member_cannot_halt_aggregation - RT-01 on HOKEA: finite overflowing member poisons the voter cohort (HTTP 500); failover carries the poison to other voters
+XFAIL test_hk_rt03_reserved_prefix_keeps_replica_dedup_state_identical - RT-03 on HOKEA: the proposing voter and the voters that learn by recovery hold different processed-update sets for one log
+XFAIL test_hk_rt05_survivors_keep_committing_after_worker_pod_crash - RT-05 on HOKEA: with voter-side aggregation (<=4 workers, the HOKEA default) losing one worker stops all later commits
+XFAIL test_hk_rt06_future_base_request_cannot_halt_reducer_tree - RT-06 on HOKEA: reducers trust worker base_version; one future-base POST to the leaf reducers halts tree training
+XFAIL test_hk_rt17_single_voter_disk_rollback_preserves_slot_1 - RT-17 on HOKEA: restoring one voter's /data/peer snapshot lets slot 1 be chosen twice
+=================== 2 passed, 5 xfailed in 387.99s (0:06:27) ===================

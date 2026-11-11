@@ -1,0 +1,103 @@
+# Red-team tests, normal mode (strict xfail)
+# date: 2026-11-10T12:52:41-05:00
+# host: Linux 6.11.2-amd64 x86_64
+# python: Python 3.14.6
+# torch: 2.15.0+cu132
+# cwd: <repo>
+# command: PYTHONPATH=src python -m pytest -p no:cacheprovider -v -rxX tests/test_redteam_spec_gaps.py tests/test_redteam_spec_gaps_round2.py tests/test_redteam_paxos_fuzz.py
+
+============================= test session starts ==============================
+platform linux -- Python 3.14.6, pytest-8.4.2, pluggy-1.7.0 -- <repo>/.venv/bin/python
+rootdir: <repo>
+configfile: pyproject.toml
+plugins: cov-6.3.0, anyio-4.16.0, hokea-0.1.0
+collecting ... collected 46 items
+
+tests/test_redteam_spec_gaps.py::test_rt01_overflowing_cohort_member_cannot_stall_honest_workers XFAIL [  2%]
+tests/test_redteam_spec_gaps.py::test_rt02_accepted_updates_keep_model_finite_and_readable XFAIL [  4%]
+tests/test_redteam_spec_gaps.py::test_rt03_reserved_aggregate_prefix_rejected_before_proposal XFAIL [  6%]
+tests/test_redteam_spec_gaps.py::test_rt03_live_and_recovered_replicas_deduplicate_identically XFAIL [  8%]
+tests/test_redteam_spec_gaps.py::test_rt04_oversized_decoded_payload_rejected_before_large_allocation XFAIL [ 10%]
+tests/test_redteam_spec_gaps.py::test_rt05_surviving_workers_commit_after_cohort_member_crashes XFAIL [ 13%]
+tests/test_redteam_spec_gaps.py::test_rt06_future_base_submission_cannot_poison_reducer XFAIL [ 15%]
+tests/test_redteam_spec_gaps.py::test_rt07_wrong_shape_member_rejected_without_blocking_cell XFAIL [ 17%]
+tests/test_redteam_spec_gaps.py::test_rt08_reducer_decoder_rejects_int8_scale_overflow XFAIL [ 19%]
+tests/test_redteam_spec_gaps.py::test_rt09_worker_contribution_applied_at_most_once_across_reducer_failover XFAIL [ 21%]
+tests/test_redteam_spec_gaps.py::test_rt10_upstream_rejection_gives_workers_a_terminal_status XFAIL [ 23%]
+tests/test_redteam_spec_gaps.py::test_rt11_reported_duplicate_and_drop_counts_survive_restart XFAIL [ 26%]
+tests/test_redteam_spec_gaps.py::test_rt12_peer_mode_requires_authentication XFAIL [ 28%]
+tests/test_redteam_spec_gaps.py::test_rt13_loader_rejects_files_that_do_not_match_published_hashes XFAIL [ 30%]
+tests/test_redteam_spec_gaps.py::test_rt14a_ci_matrix_covers_every_supported_python XFAIL [ 32%]
+tests/test_redteam_spec_gaps.py::test_rt14b_retained_evidence_matches_the_declared_commit XFAIL [ 34%]
+tests/test_redteam_spec_gaps.py::test_rt14c_documented_hokea_net_backend_is_implemented XFAIL [ 36%]
+tests/test_redteam_spec_gaps.py::test_rt14d_selected_run_evidence_records_every_section7_field XFAIL [ 39%]
+tests/test_redteam_spec_gaps.py::test_s6_read_at_replica_that_missed_every_acknowledged_write PASSED [ 41%]
+tests/test_redteam_spec_gaps.py::test_s8_isolated_replica_cannot_acknowledge_commit_or_authoritative_read PASSED [ 43%]
+tests/test_redteam_spec_gaps.py::test_l4_backup_reducer_commits_after_primary_dies_before_forwarding PASSED [ 45%]
+tests/test_redteam_spec_gaps.py::test_l4_s1_backup_rebuilds_same_batch_after_primary_committed PASSED [ 47%]
+tests/test_redteam_spec_gaps_round2.py::test_rt17_single_voter_rollback_preserves_single_value_per_slot XFAIL [ 50%]
+tests/test_redteam_spec_gaps_round2.py::test_rt18_slow_but_live_worker_eventually_contributes XFAIL [ 52%]
+tests/test_redteam_spec_gaps_round2.py::test_rt19_job_completion_reaches_workers_through_reducers XFAIL [ 54%]
+tests/test_redteam_spec_gaps_round2.py::test_rt20_equal_inputs_give_equal_model_regardless_of_arrival_timing XFAIL [ 56%]
+tests/test_redteam_spec_gaps_round2.py::test_rt21_acknowledged_update_survives_restart_for_every_valid_quorum_config XFAIL [ 58%]
+tests/test_redteam_spec_gaps_round2.py::test_rt22_every_voter_assigns_a_worker_to_the_same_cell XFAIL [ 60%]
+tests/test_redteam_spec_gaps_round2.py::test_rt23_dashboard_matches_section8_profiles_and_timing_model XFAIL [ 63%]
+tests/test_redteam_spec_gaps_round2.py::test_rt24_unique_committed_examples_cannot_exceed_training_split XFAIL [ 65%]
+tests/test_redteam_spec_gaps_round2.py::test_rt25_ms3_model_has_equal_seed_fault_scenario_evidence XFAIL [ 67%]
+tests/test_redteam_spec_gaps_round2.py::test_rt26_hokea_runtime_does_not_enable_experimental_compaction XFAIL [ 69%]
+tests/test_redteam_spec_gaps_round2.py::test_rt27_local_hokea_suite_cluster_size_matches_image_topology XFAIL [ 71%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[0] PASSED [ 73%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[1] PASSED [ 76%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[2] PASSED [ 78%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[3] PASSED [ 80%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[4] PASSED [ 82%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[5] PASSED [ 84%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[6] PASSED [ 86%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[7] PASSED [ 89%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[8] PASSED [ 91%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[9] PASSED [ 93%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[10] PASSED [ 95%]
+tests/test_redteam_paxos_fuzz.py::test_s2_randomized_schedules_choose_one_value_per_slot[11] PASSED [ 97%]
+tests/test_redteam_paxos_fuzz.py::test_demo_voter_restart_without_durable_files_breaks_s2 PASSED [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  <repo>/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_redteam_spec_gaps.py::test_rt08_reducer_decoder_rejects_int8_scale_overflow
+  <repo>/src/elasticml/quantization.py:65: RuntimeWarning: overflow encountered in multiply
+    decoded[name] = value.astype(np.float32) * np.float32(scalar)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+XFAIL tests/test_redteam_spec_gaps.py::test_rt01_overflowing_cohort_member_cannot_stall_honest_workers - RT-01: finite-but-huge member poisons the voter cohort; commit raises CodecError (HTTP 500) forever for that base version
+XFAIL tests/test_redteam_spec_gaps.py::test_rt02_accepted_updates_keep_model_finite_and_readable - RT-02: no gradient-magnitude bound; momentum overflows to inf and every later authoritative model read fails
+XFAIL tests/test_redteam_spec_gaps.py::test_rt03_reserved_aggregate_prefix_rejected_before_proposal - RT-03: direct mode accepts the reserved aggregate update_id prefix; only aggregation mode rejects it
+XFAIL tests/test_redteam_spec_gaps.py::test_rt03_live_and_recovered_replicas_deduplicate_identically - RT-03: live and WAL-recovered replicas derive different dedup sets and example metrics from the same chosen log
+XFAIL tests/test_redteam_spec_gaps.py::test_rt04_oversized_decoded_payload_rejected_before_large_allocation - RT-04: only encoded characters are bounded; a ~20 KB payload allocates tens of MB before shape validation rejects it
+XFAIL tests/test_redteam_spec_gaps.py::test_rt05_surviving_workers_commit_after_cohort_member_crashes - RT-05: /v1/updates/status never triggers the bounded partial flush; survivors of a lost cohort member poll 'pending' forever
+XFAIL tests/test_redteam_spec_gaps.py::test_rt06_future_base_submission_cannot_poison_reducer - RT-06: reducers trust worker base_version; one future base evicts honest work and makes every later submission 'stale'
+XFAIL tests/test_redteam_spec_gaps.py::test_rt07_wrong_shape_member_rejected_without_blocking_cell - RT-07: reducer admits gradients without shape validation; a mismatched member stays in the bucket and batch formation fails forever
+XFAIL tests/test_redteam_spec_gaps.py::test_rt08_reducer_decoder_rejects_int8_scale_overflow - RT-08: b64_to_arrays checks finiteness before int8 dequantisation, so scale*127 overflow yields inf inside the reducer
+XFAIL tests/test_redteam_spec_gaps.py::test_rt09_worker_contribution_applied_at_most_once_across_reducer_failover - RT-09: with gradient_aggregation_allow_stale the voter sees only reducer aggregate ids, so a retried worker update is applied twice
+XFAIL tests/test_redteam_spec_gaps.py::test_rt10_upstream_rejection_gives_workers_a_terminal_status - RT-10: reducer _advance ignores 422/429 replies, so workers are never told their aggregate was rejected and poll 'pending' forever
+XFAIL tests/test_redteam_spec_gaps.py::test_rt11_reported_duplicate_and_drop_counts_survive_restart - RT-11: §7 duplicate/dropped metrics are volatile and reset when a replica restarts, so reported counts undercount
+XFAIL tests/test_redteam_spec_gaps.py::test_rt12_peer_mode_requires_authentication - RT-12: peer mode validates with auth_token=None, leaving prepare/accept open to any network client; the spec only excludes stolen tokens
+XFAIL tests/test_redteam_spec_gaps.py::test_rt13_loader_rejects_files_that_do_not_match_published_hashes - RT-13: checksums are verified only when download=True; existing/tampered archives and prepared .npy arrays are never hashed
+XFAIL tests/test_redteam_spec_gaps.py::test_rt14a_ci_matrix_covers_every_supported_python - RT-14a: spec claims Python 3.11-3.14 but CI tests only 3.12 and 3.14
+XFAIL tests/test_redteam_spec_gaps.py::test_rt14b_retained_evidence_matches_the_declared_commit - RT-14b: spec names commit 17f8bd4 but the retained clean-artifact evidence was produced from ff56901 and this tree has no git metadata
+XFAIL tests/test_redteam_spec_gaps.py::test_rt14c_documented_hokea_net_backend_is_implemented - RT-14c: HOKEA_NET_BACKEND is documented in §9 but is not read anywhere in this repository
+XFAIL tests/test_redteam_spec_gaps.py::test_rt14d_selected_run_evidence_records_every_section7_field - RT-14d: the selected 94.68% run record omits §7 fields: commit, script, per-role seeds, latency p50/p95, CPU/memory/bytes, churn rates, network profile; its raw log is not in the checkout
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt17_single_voter_rollback_preserves_single_value_per_slot - RT-17: §5 excludes rolled-back state only 'for a majority'; restoring ONE voter from an older snapshot lets a second value be chosen
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt18_slow_but_live_worker_eventually_contributes - RT-18: with synchronous aggregation a worker slower than the partial-flush deadline is answered 'stale' every round and never contributes
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt19_job_completion_reaches_workers_through_reducers - RT-19: the voter's 409 job_complete is mapped to 'stale' with a fabricated model_version (base+1), so tree-mode workers loop instead of stopping
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt20_equal_inputs_give_equal_model_regardless_of_arrival_timing - RT-20: committed aggregates depend on wall-clock arrival relative to the partial-flush deadline, so equal seeds/inputs do not give an equal model; the 'deterministic run' claim is unsupported
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt21_acknowledged_update_survives_restart_for_every_valid_quorum_config - RT-21: validate() accepts storage_write_quorum + storage_read_quorum <= N; an 'applied' update written to one mirror vanishes after restart
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt22_every_voter_assigns_a_worker_to_the_same_cell - RT-22: membership is per-replica and unreplicated; two voters with different registration views place the same worker in different cells
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt23_dashboard_matches_section8_profiles_and_timing_model - RT-23: §8/§12 say 'healthy' profile and timed runs replacing the simulated-day framing; the dashboard still uses 'good' days and simulated_hours
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt24_unique_committed_examples_cannot_exceed_training_split - RT-24: the reported 'unique_committed_examples' (2,444,800) exceeds the 55,000-example training split; it counts exposures, not unique examples
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt25_ms3_model_has_equal_seed_fault_scenario_evidence - RT-25: no retained fashion_cnn_v5 evidence has a churn, request-loss or replica-failure run; every MS3 model record is healthy-only
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt26_hokea_runtime_does_not_enable_experimental_compaction - RT-26: every HOKEA voter (the runtime behind the reported cluster results) hard-codes peer_log_compaction_enabled=True
+XFAIL tests/test_redteam_spec_gaps_round2.py::test_rt27_local_hokea_suite_cluster_size_matches_image_topology - RT-27: hokea_tests/conftest.py starts 3 nodes, but the image requires 3 voters + one pod per worker (6 for the default 3 workers); every container exits with 'HOKEA must provide exactly 6 pods'
+================== 17 passed, 29 xfailed, 2 warnings in 5.33s ==================

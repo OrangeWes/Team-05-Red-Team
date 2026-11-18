@@ -143,7 +143,7 @@ The slot and proposer files carry no epoch, checksum or monotonic counter that a
 
 A closely related control experiment, RT-15, uses a fault the specification does exclude: a HOKEA voter restarted with empty storage. It shows the same divergence (`d00108c3…` becomes `0772b07a…`, and the restarted voter reports `learned_prefix_length: 0`). We include it because the repository's own failover test restarts a voter with HOKEA, so its L3 evidence is gathered inside an excluded fault.
 
-### 3.12 A retry across reducer failover (S1)
+### 3.1.2 A retry across reducer failover (S1)
 
 Primary and backup reducers share a reducer ID, so a worker can retry against either. Each reducer, though, names its batches from its own local membership, and voters deduplicate *aggregate* IDs, not the worker update IDs inside them:
 
@@ -156,7 +156,7 @@ checker: update w1:u1 applied twice   (expected model_version 1, got 2)
 
 We could not reproduce this on HOKEA. After the primary committed the five members, the backup reducer held the identical retry `pending` indefinitely, and the model stayed at version 1. That is safe, though the worker never gets an answer. The in-process reproduction, where the backup's batch does flush, stands. With the selected staleness of 0, B is rejected as stale, so the selected profile avoids this by accident. `allow_stale` is a supported, documented configuration, and the specification never defines a "worker contribution" in tree mode. We'd expect the voter state machine to carry and deduplicate member update IDs end to end.
 
-### 3.13 The default deployment mode (S3)
+### 3.1.3 The default deployment mode (S3)
 
 In single-coordinator mode, `MirroredStore` writes each version to W of N mirror directories and reads from R of them. The validator accepts any 1 ≤ W, R ≤ N, including W = 1, R = 2. Then:
 
@@ -168,7 +168,7 @@ read quorum = mirrors {1, 2}                  → model_version 0
 
 An acknowledged update is gone. The fix is a one-line validation check, W + R > N. We report it because single mode is the configuration default, and §4 doesn't say it is outside the guarantees.
 
-### 3.14 Same log, different state (S7)
+### 3.1.4 Same log, different state (S7)
 
 The reserved prefix `__elasticml_aggregate_v1__:` marks reducer aggregates. Voters reject it from workers only when aggregation is enabled, so in direct mode a worker-supplied ID with that prefix is committed. The proposing voter treats it as an ordinary ID. Voters that learn the slot by *recovery* decode it as an aggregate manifest, add its named members to their processed set, and add its sample count to their metrics. On HOKEA, the voter configuration printed `peer_log_compaction_enabled: true`, `gradient_aggregation_enabled: false`:
 
@@ -182,7 +182,7 @@ node1 ← POST "__elasticml_aggregate_v1__:eNqrVspNzU1KLSpWsoqOV…" → 200 app
 
 The voters have identical logs but different state. A later, genuine update named in the manifest (`victim-1`) is answered `duplicate` by nodes 2 and 3 without ever being applied. This is the only finding here that needs a dishonest client, and it shows that the voters' state is not a pure function of their logs.
 
-### 3.15 Inputs the voters should have refused (S5)
+### 3.1.5 Inputs the voters should have refused (S5)
 
 S5 promises that invalid input is rejected and leaves the model unchanged. Six inputs got through:
 
@@ -333,7 +333,7 @@ Two more observations came out of these runs.
 
 **Overcounting metrics (P14).** The voters' own `included_examples` counter reported 1,754 examples/s in the healthy run. Six one-core workers can compute at most about 1,530 examples/s, and commits × batch gives 559. The counter runs about 3.1× ahead of the examples that actually reached the optimizer. This is the same kind of inflation as the published 2.44 M "unique committed examples" (RT-24). A reader taking §7's examples-per-second at face value would overestimate useful throughput.
 
-## 6 Claims and evidence
+## 3.6 Summery
 
 The specification makes concrete, checkable statements about its own artifact. Several do not hold:
 
@@ -355,7 +355,7 @@ The specification makes concrete, checkable statements about its own artifact. S
 | RT-12 | (no authentication requirement) | Peer mode runs Paxos `prepare` and `accept` with `auth_token=None`. Default tokens are committed to the repository. **On HOKEA**, a cluster started without a token accepted the repository's published token on all three voters (`/v1/model` 200). Unauthenticated Paxos calls were refused (401). |
 | RT-22 | Workers are grouped into cells | Membership is per voter and not replicated. Two voters put worker `w3` in cells 0 and 2 (in process). **Not reproduced on HOKEA**: workers heartbeat every voter, and all three active sets matched before and after a 30-second isolation of voter 1. |
 
-## 7 Discussion
+## 4 Discussion
 
 ElasticML's Paxos core does what it says: under the assumptions in §5, we found no way to choose two values for a slot. The trouble is that those assumptions are drawn in the wrong place. Excluding rollback only "for a majority" admits a single-voter rollback, and that alone breaks S2 on a real cluster. The other safety findings sit *above* Paxos: deduplication that sees aggregate IDs but not worker IDs (S1), a storage validator that accepts quorums that don't intersect (S3), and a state machine whose recovery path interprets IDs differently from its proposal path (S7). Each fix is small. We'd suggest a durable acceptor epoch, end-to-end member IDs, W + R > N validation, and rejecting the reserved prefix in every mode.
 

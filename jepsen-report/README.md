@@ -39,7 +39,7 @@ The MS3 specification is unusually explicit. Section 4 lists eight safety proper
 
 Liveness is conditional on "eventually limited proposer contention" and at least one healthy, retrying worker.
 
-Section 5 is the fault model. It *includes* worker crash, restart, churn and heterogeneous speed; one voter crashing or restarting with its durable files; reducer crash with failover to the backup; dropped, delayed, duplicated and retried requests; temporary partitions; crashes between acceptance, application and acknowledgement; and total quorum loss. It *excludes* Byzantine processes, corrupt or rolled-back durable state **for a majority**, two processes sharing one replica identity, and a voter that restarts without its durable files. The specification notes that a HOKEA container restart wipes local storage, so a restarted HOKEA voter falls in the excluded category.
+Section 5 in the team's project report is the fault model. It *includes* worker crash, restart, churn and heterogeneous speed; one voter crashing or restarting with its durable files; reducer crash with failover to the backup; dropped, delayed, duplicated and retried requests; temporary partitions; crashes between acceptance, application and acknowledgement; and total quorum loss. It *excludes* Byzantine processes, corrupt or rolled-back durable state **for a majority**, two processes sharing one replica identity, and a voter that restarts without its durable files. The specification notes that a HOKEA container restart wipes local storage, so a restarted HOKEA voter falls in the excluded category.
 
 The specification does not say which guarantees cover which deployment profile. Reading the code, we think the guarantees should look like this:
 
@@ -120,7 +120,7 @@ voters 1, 2, 3:  model_version 1079 = processed_update_count 1079, identical lea
 
 Every voter ended with the same log and model, every acknowledged update was applied, and none was applied twice. The one `duplicate` is a client retry after an ambiguous 503 that had in fact been applied, which is exactly what S1 is for. Durable writes use `fsync` followed by a directory `fsync`. The problems are at the edges: the fault model, the reducer tier, the default deployment mode, and the state machine applied on top of the log.
 
-## 3.1 (Put a section title and a description underneath)
+## 3.1 (Put a section title and ideally some kind of description underneath)
 
 ### 3.1.1 One rolled-back voter (S2)
 
@@ -199,7 +199,7 @@ S5 promises that invalid input is rejected and leaves the model unchanged. Six i
 
 The common thread is that validation checks the encoded or per-tensor input, not the values that actually reach the optimizer. The specification never says the model must stay finite, and nothing enforces it.
 
-## 3.2 Liveness
+## 3.2 Liveness (add some kind of section description if fitting)
 
 ### 3.2.1 One worker crash stalls voter-side cohorts (L1)
 
@@ -243,7 +243,7 @@ node2: big → 200 pending;  u2 → 500;  u3 → 500        (client failover)
 
 A reducer ignores a voter's 422 or 429 reply, so its members stay `pending` forever (RT-10). When the job reaches `max_job_updates`, the voter returns 409 `job_complete`. The reducer translates that into `{"status":"stale","model_version":2}`, with a version it made up (base + 1), so workers in tree mode loop instead of stopping (RT-19). On HOKEA, with `max_job_updates = 6` and five workers, the job completed, and 60 seconds later every worker pod was still running its `elasticml.worker` process. A live worker that finishes 1.0 s into each round, against the default 0.75 s reducer flush, was answered `stale` in 6 of 6 rounds and never contributed (RT-18). §5 includes heterogeneous speed, but nothing in the specification promises a slow worker a turn.
 
-## 3.3 Performance
+## 3.3 Performance (add some kind of section description if fitting)
 
 ### 3.3.1 What the specification promises
 

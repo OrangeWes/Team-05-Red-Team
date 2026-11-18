@@ -18,7 +18,7 @@ There is also a second deployment mode. The configuration default, `election_bac
 
 The published result is one physical-cluster run: 20 one-core workers, three voters, three leaf reducers and one root reducer. It reached 94.68% validation accuracy, crossed 94% at 945 seconds, and committed 1,355.89 examples per second.
 
-## 2 Guarantees
+## 2 Test Design
 
 The MS3 specification is unusually explicit. Section 4 lists eight safety properties and four liveness properties, and says that each is a guarantee with automated tests:
 
@@ -107,9 +107,9 @@ Consensus is not the bottleneck: three voters agree on a 462k-parameter float16 
 
 When a voter is isolated, commits pause for a few seconds and resume once the other two voters re-establish a ballot. The first authoritative read at a voter that missed recent writes returned 503 in 2 of 3 rotations on HOKEA, because its recovery ballot was below the writer's promise and it does not retry internally (RT-16). A client retry always succeeded. This is not a correctness problem, but it means "L3 holds" depends on clients retrying reads.
 
-## 3 Safety
+## 3 Results
 
-Paxos is the part of ElasticML that people worry about, and it is mostly fine. Twelve fuzzed schedules with message loss, reply loss, durable restarts and two competing proposers never produced a slot with two values. We repeated the experiment on HOKEA. Three clients submitted unique updates to random voters for 90 seconds, while a nemesis either isolated a random voter or gave it 50 ± 50 ms delay with 25% packet loss, every six seconds:
+Paxos is a key part of the functionality of the system, it can also be complicated to implement, making it a significant source of potential errors. However, through our testing we found its implementation to be sufficient. Twelve fuzzed schedules with message loss, reply loss, durable restarts and two competing proposers never produced a slot with two values. We repeated the experiment on HOKEA. Three clients submitted unique updates to random voters for 90 seconds, while a nemesis either isolated a random voter or gave it 50 ± 50 ms delay with 25% packet loss, every six seconds:
 
 ```
 faults: loss n2 @0.5s, isolate n2 @12.8s, loss n1 @24.9s, isolate n3 @37.1s,
@@ -143,7 +143,7 @@ The slot and proposer files carry no epoch, checksum or monotonic counter that a
 
 A closely related control experiment, RT-15, uses a fault the specification does exclude: a HOKEA voter restarted with empty storage. It shows the same divergence (`d00108c3…` becomes `0772b07a…`, and the restarted voter reports `learned_prefix_length: 0`). We include it because the repository's own failover test restarts a voter with HOKEA, so its L3 evidence is gathered inside an excluded fault.
 
-### 3.2 A retry across reducer failover (S1)
+### 3.12 A retry across reducer failover (S1)
 
 Primary and backup reducers share a reducer ID, so a worker can retry against either. Each reducer, though, names its batches from its own local membership, and voters deduplicate *aggregate* IDs, not the worker update IDs inside them:
 
@@ -156,7 +156,7 @@ checker: update w1:u1 applied twice   (expected model_version 1, got 2)
 
 We could not reproduce this on HOKEA. After the primary committed the five members, the backup reducer held the identical retry `pending` indefinitely, and the model stayed at version 1. That is safe, though the worker never gets an answer. The in-process reproduction, where the backup's batch does flush, stands. With the selected staleness of 0, B is rejected as stale, so the selected profile avoids this by accident. `allow_stale` is a supported, documented configuration, and the specification never defines a "worker contribution" in tree mode. We'd expect the voter state machine to carry and deduplicate member update IDs end to end.
 
-### 3.3 The default deployment mode (S3)
+### 3.13 The default deployment mode (S3)
 
 In single-coordinator mode, `MirroredStore` writes each version to W of N mirror directories and reads from R of them. The validator accepts any 1 ≤ W, R ≤ N, including W = 1, R = 2. Then:
 
@@ -168,7 +168,7 @@ read quorum = mirrors {1, 2}                  → model_version 0
 
 An acknowledged update is gone. The fix is a one-line validation check, W + R > N. We report it because single mode is the configuration default, and §4 doesn't say it is outside the guarantees.
 
-### 3.4 Same log, different state (S7)
+### 3.14 Same log, different state (S7)
 
 The reserved prefix `__elasticml_aggregate_v1__:` marks reducer aggregates. Voters reject it from workers only when aggregation is enabled, so in direct mode a worker-supplied ID with that prefix is committed. The proposing voter treats it as an ordinary ID. Voters that learn the slot by *recovery* decode it as an aggregate manifest, add its named members to their processed set, and add its sample count to their metrics. On HOKEA, the voter configuration printed `peer_log_compaction_enabled: true`, `gradient_aggregation_enabled: false`:
 
@@ -182,7 +182,7 @@ node1 ← POST "__elasticml_aggregate_v1__:eNqrVspNzU1KLSpWsoqOV…" → 200 app
 
 The voters have identical logs but different state. A later, genuine update named in the manifest (`victim-1`) is answered `duplicate` by nodes 2 and 3 without ever being applied. This is the only finding here that needs a dishonest client, and it shows that the voters' state is not a pure function of their logs.
 
-### 3.5 Inputs the voters should have refused (S5)
+### 3.15 Inputs the voters should have refused (S5)
 
 S5 promises that invalid input is rejected and leaves the model unchanged. Six inputs got through:
 
@@ -197,9 +197,9 @@ S5 promises that invalid input is rejected and leaves the model unchanged. Six i
 
 The common thread is that validation checks the encoded or per-tensor input, not the values that actually reach the optimizer. The specification never says the model must stay finite, and nothing enforces it.
 
-## 4 Liveness
+## 3.4 Liveness
 
-### 4.1 One worker crash stalls voter-side cohorts (L1)
+### 3.4.1 One worker crash stalls voter-side cohorts (L1)
 
 With four or fewer workers, the HOKEA default, voters aggregate the cohort themselves. A partial cohort is committed after 2 seconds, as long as at least half its members are present. The check runs *only inside the gradient POST handler*. Workers whose gradients are `pending` poll `/v1/updates/status`, which never flushes. Kill one worker, and nobody POSTs again:
 
@@ -214,7 +214,7 @@ kill node 6 (a worker)
 
 Two in-flight cohorts committed. After that, the two survivors waited forever. This reproduced in both HOKEA runs (the second stopped at v15).
 
-### 4.2 One request halts the tree (L1, L4, S4)
+### 3.4.2 One request halts the tree (L1, L4, S4)
 
 Reducers learn the current version from the `base_version` workers send, and `_max_observed_base_version` only ever increases. One POST with base 10000 makes every honest gradient look stale from then on:
 
@@ -237,19 +237,19 @@ node2: big → 200 pending;  u2 → 500;  u3 → 500        (client failover)
 {"event":"rt01_result","codes":[200,500,500,200,500,500],"versions":{"1":0,"2":0,"3":0}}
 ```
 
-### 4.3 Workers that never get a terminal answer
+### 3.4.3 Workers that never get a terminal answer
 
 A reducer ignores a voter's 422 or 429 reply, so its members stay `pending` forever (RT-10). When the job reaches `max_job_updates`, the voter returns 409 `job_complete`. The reducer translates that into `{"status":"stale","model_version":2}`, with a version it made up (base + 1), so workers in tree mode loop instead of stopping (RT-19). On HOKEA, with `max_job_updates = 6` and five workers, the job completed, and 60 seconds later every worker pod was still running its `elasticml.worker` process. A live worker that finishes 1.0 s into each round, against the default 0.75 s reducer flush, was answered `stale` in 6 of 6 rounds and never contributed (RT-18). §5 includes heterogeneous speed, but nothing in the specification promises a slow worker a turn.
 
-## 5 Performance
+## 3.5 Performance
 
-### 5.1 What the specification promises
+### 3.5.1 What the specification promises
 
 Nothing. §7 lists metrics to report: time to accuracy, examples and commits per second, pull-to-acknowledgement latency at p50 and p95, commit latency, recovery time, failover-to-next-commit time, CPU, memory and bytes. It then says performance results are "logged measurements from specific runs, not guarantees", that the 94.68% result is "not a confidence interval across hardware", and that the team does "not yet claim a speedup from adding workers".
 
 That is an honest position, but it leaves a system whose stated purpose is elastic training with no performance property anyone can check. A guarantee that training "continues" after a worker leaves (L1) is met by a cluster that commits once a minute. Every metric in §7 is named without a target, a reference configuration, or a comparison to beat. So we can't report a performance guarantee as violated. We can report which guarantees are missing, state the bound a reasonable reader would assume, and measure the system against it.
 
-### 5.2 Performance guarantees the specification does not make
+### 3.5.2 Performance guarantees the specification does not make
 
 | # | Missing guarantee | What a user would reasonably assume | What we measured | Test |
 |---|---|---|---|---|
@@ -269,7 +269,7 @@ That is an honest position, but it leaves a system whose stated purpose is elast
 | P14 | **Metric correctness.** "Unique committed examples" has no definition. | Unique means unique. | It counts exposures (2.44 M against a 55 k training set, RT-24). On HOKEA, the voter's `included_examples` rose faster than six one-core workers can compute. | RT-24, PH runs |
 | P15 | **Measurement isolation.** Held-out evaluation runs on voter 3, a voting replica. | Observation doesn't slow the system it measures. | The full-run harness evaluates on a voter, so every accuracy point costs voter CPU. Nothing in the specification separates observation load from the measured result. | — |
 
-### 5.3 Normalizing for hardware
+### 3.5.3 Normalizing for hardware
 
 The full 20-worker run needs 27 one-core containers: 3 voters, 20 workers and 4 reducers. Our host has 8 cores, so running it locally gives much worse results that say more about our laptop than about ElasticML. Rather than compare raw seconds, we normalize with one stated assumption.
 
@@ -287,7 +287,7 @@ time to 94% if compute-bound on reasonable hardware                →  ~251 s  
 
 So, if the class cluster's cores are like ours, roughly three quarters of the published run's 945 seconds were spent waiting rather than computing. The rest of this section uses HOKEA runs scaled down to 6 workers (9 containers on 8 cores), which our host can run without heavy oversubscription. We compare scenarios with each other at equal seed, and convert to compute fraction to compare with the published run.
 
-### 5.4 Equal-seed runs: healthy, churn, churn plus partition
+### 3.5.4 Equal-seed runs: healthy, churn, churn plus partition
 
 We ran the repository's own accuracy profile, as its full-run harness configures it: `fashion_cnn_v5`, AdamW with one-cycle learning rate at peak 0.006, int8 worker transport, float16 commits, a synchronous reducer cell with a 60-second flush, one reducer replica, and the published run's seed (50929546). We scaled it to 6 workers and ran three scenarios for 7 minutes each:
 

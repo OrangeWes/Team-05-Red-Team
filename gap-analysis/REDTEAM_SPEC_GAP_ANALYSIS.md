@@ -360,3 +360,68 @@ All logs are in [`docs/redteam_logs/`](../logs/), and each starts with a header 
 - The HOKEA xfails are backed by the event lines in §4.5 rather than by a `--runxfail` assertion line.
 - Deterministic in-process tests cannot exhaust asynchronous schedules. The S2 fuzz is a randomized search, not a proof.
 - Severities assume trusted clients, as §5 requires. RT-03, RT-06 and RT-12 are more serious if clients are untrusted.
+
+## 12. Round 3 (2026-11-17): performance, and every portable test on HOKEA
+
+### 12.1 New findings
+
+| ID | Sev. | Spec | Finding | Test | HOKEA |
+|---|---|---|---|---|---|
+| RT-28 / PF-04 | Medium | §2, L4 | The accuracy profile used for the published run sets `ELASTICML_HOKEA_REDUCER_REPLICAS=1`, so the selected configuration has **no backup reducer**. | `test_pf04_…` | Churn run: killing node 4, the only reducer host, stalled all workers for 34.7 s. |
+| PF-03 | High | L1, §5 churn | Reducer `group_size` is fixed at start-up. After one worker leaves, every round in its cell waits the full partial-flush timeout (60 s in the accuracy profile). Survivors drop from ~1.9 s per commit to 60 s per commit. | `test_pf03_…` | Every one of 6 departures stopped all five survivors for 28.5–34.7 s, until the worker returned. |
+| PH-02 | High | L1, §5 churn | Churn (one of six workers down 20 s in every 60 s) cut the commit rate to **61%** of healthy. Time to 70%, 80% and 85% accuracy doubled. | `test_ph_churn` | Confirmed |
+| PH-03 | High | L1, L3 | Churn plus two 30 s voter isolations: **56%** of healthy, longest stall 34.2 s. | `test_ph_churn_partition` | Confirmed |
+| PH-04 | Medium | §5 heterogeneous speed | One of five workers throttled to 0.25 CPU cut the whole cluster to **41%** of its healthy commit rate. | `test_hk_straggler_…` | Confirmed |
+| O-19 | Info | S6, P12 | Learner lag: in a healthy run, the slowest voter trails the most advanced by a median of 31 versions (max 50). With a 6-update job, voters 2 and 3 still showed version 0 after voter 1 finished. | perf runs, RT-19 | Observed |
+| O-20 | Low-Med | §7 metrics | The voters' `included_examples` counter reported 1,754 examples/s from six one-core workers, against a physical maximum of ~1,530 and 559 by commits × batch. That is ~3.1× inflation, like RT-24. | perf runs | Observed |
+
+### 12.2 Performance guarantees the specification does not make
+
+§7 says performance results are "measurements, not guarantees". The table below lists the missing guarantees and what we measured against the bound we assumed. The Jepsen-style report (§5.2) has the full discussion.
+
+| # | Missing guarantee | Assumed bound | Measured |
+|---|---|---|---|
+| P1 | Reference hardware | A1: class core within 2× of a Xeon Gold 6238R core | Published run = 27% compute utilization under A1 |
+| P2 | Throughput floor | Healthy workers mostly busy | 27% (published, under A1), 37% (our 6-worker healthy run) |
+| P3 | Degradation under churn | A4: ≥ 70% of healthy | 61%, and 56% with partitions |
+| P4 | Recovery after a worker leaves | A2: ≤ 5 healthy commit intervals (9.4 s) | 60 s per round (PF-03). On HOKEA, 28.5–34.7 s per departure |
+| P5 | Heterogeneous speed | A5: one straggler costs ≤ half | 41% of healthy remains |
+| P6 | Voter failover-to-next-commit | A few seconds | Not separable from worker stalls; first read after failover returns 503 (RT-16) |
+| P7 | Scaling | Elastic = faster with more workers | No claim, no evidence |
+| P8 | Time-to-accuracy variance | Reproducible run | Same seed gives a different model (RT-20) |
+| P9 | Accuracy under faults | — | 2× time to each target; 86.5% against 90.1% at 7 min |
+| P10 | Latency (p50/p95) | Measured and bounded | Not published (RT-14d) |
+| P11 | Memory per voter | Survives any one request | A 519 KB request killed a voter (RT-04) |
+| P12 | Learner lag | A few versions | Median 31, max 50 (O-19) |
+| P13 | Job termination time | Within a round | Workers never stop in tree mode (RT-19) |
+| P14 | Metric correctness | Counts what it says | ~3.1× inflation (O-20), RT-24 |
+| P15 | Measurement isolation | Observation off the hot path | Evaluation runs on voter 3 |
+
+### 12.3 Round-3 HOKEA results for earlier findings
+
+| ID | HOKEA result |
+|---|---|
+| RT-02 | **Reproduced.** After two accepted 3e38 gradients with momentum 0.9, `/v1/model` returns 500 on all three voters. |
+| RT-04 | **Reproduced, and worse.** One 519 KB request decoding to 400 MB took voter 1 down (connection dropped, container stopped). |
+| RT-07 | **Reproduced.** After one wrong-shape member, every honest member's reducer status is HTTP 500 and nothing commits. |
+| RT-08 / RT-10 | **Reproduced.** The reducer admits the int8 overflow (`200 pending`), then every cell member gets HTTP 500, with no terminal rejection. |
+| RT-09 | **Not reproduced.** The backup kept the retry `pending`, and the version stayed at 1. The in-process reproduction stands. |
+| RT-12 | **Reproduced.** Started without a token, all voters accept the repository's published token. Unauthenticated Paxos calls are refused with 401. |
+| RT-19 | **Reproduced.** Worker processes were still running 60 s after the job completed. |
+| RT-20 | **Reproduced.** Equal-seed clusters committed different models at version 20. |
+| RT-22 | **Not reproduced.** Membership matched on all voters before and after a voter isolation. In-process only. |
+| S1/S2 | **Held.** 1,081 updates under random isolations and 25% loss: identical logs and models, version = processed count, every acknowledged update applied. |
+
+Not portable to HOKEA: RT-11 (a restart wipes `/data`), RT-13 (the dataset is baked into the image), RT-14a–d and RT-23–25 (documents), RT-21 (HOKEA always runs peer mode), PF-01/02/05 (micro-benchmarks).
+
+### 12.4 Round-3 logs
+
+| File | Contents |
+|---|---|
+| `14_hokea_perf.log` | healthy, churn and churn+partition runs (final, all-voter sampler) |
+| `14a_hokea_perf_voter1_sampler.log` | First run, sampling voter 1 only. Its stalls are learner lag, kept to show O-19 |
+| `15_hokea_round3.log` | 11 round-3 HOKEA tests with `--runxfail` |
+| `16_hokea_round3_rerun.log` | RT-07, RT-08/10, RT-09, RT-19 rerun after fixing our harness timing |
+| `17_inprocess_perf.log` | PF-01 to PF-05 |
+
+All three harness fixes in round 3 were to our own test code: a summary bug, the reducer readiness wait, and the sampler watching all voters. No ElasticML file was changed.

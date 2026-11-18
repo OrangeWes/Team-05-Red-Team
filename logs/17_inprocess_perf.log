@@ -1,0 +1,33 @@
+# Log 17: in-process performance tests (PF-01..PF-05)
+# date: 2026-11-18T01:41:53Z  host: Linux 6.11.2-amd64 8 cores, Xeon Gold 6238R
+# command: PYTHONPATH=src python -m pytest -v -s tests/test_redteam_perf.py
+
+============================= test session starts ==============================
+platform linux -- Python 3.14.6, pytest-8.4.2, pluggy-1.7.0 -- <repo>/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: <repo>
+configfile: pyproject.toml
+plugins: cov-6.3.0, anyio-4.16.0, hokea-0.1.0
+collecting ... collected 5 items
+
+tests/test_redteam_perf.py::test_pf01_local_core_calibration_against_selected_run ELASTICML_PERF {"event": "pf01_calibration", "local_core_examples_per_second": 247.1, "reference_examples_per_second_per_worker": 67.8, "reference_compute_fraction": 0.274, "reference_commit_interval_seconds": 1.887, "local_compute_seconds_per_commit": 0.518, "examples_to_94_percent": 1281330, "projected_time_to_94_if_compute_bound_seconds": 259.3}
+PASSED
+tests/test_redteam_perf.py::test_pf02_coordination_path_fits_the_reference_commit_interval ELASTICML_PERF {"event": "pf02_commit_budget", "fan_in": 7, "worker_int8_encode_seconds": 0.0217, "reducer_plus_paxos_commit_seconds": 0.4443, "worker_compute_seconds": 0.527, "reference_commit_interval_seconds": 1.887, "unexplained_seconds_per_commit": 0.893}
+PASSED
+tests/test_redteam_perf.py::test_pf03_departed_worker_does_not_stall_every_later_round ELASTICML_PERF {"event": "pf03_departed_worker", "group_size": 6, "flush_timeout_seconds": 60.0, "round_seconds": [60.0, 60.0, 60.0], "survivor_examples_per_second": 10.7, "assumed_bound_seconds": 9.43}
+XFAIL
+tests/test_redteam_perf.py::test_pf04_accuracy_profile_keeps_a_backup_reducer ELASTICML_PERF {"event": "pf04_reducer_replicas", "accuracy_profile_reducer_replicas": "1"}
+XFAIL
+tests/test_redteam_perf.py::test_pf05_int8_codec_cost_and_payload_size ELASTICML_PERF {"event": "pf05_codec", "parameters": 462570, "float32_bytes": 1850280, "int8_base64_bytes": 563520, "compression_ratio": 3.28, "encode_seconds": 0.0219, "decode_seconds": 0.0111}
+PASSED
+
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  <repo>/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+XFAIL tests/test_redteam_perf.py::test_pf03_departed_worker_does_not_stall_every_later_round - PF-03: reducer group_size is fixed at start-up, so after one worker leaves every round in its cell waits the full partial-flush timeout (60 s in the accuracy profile) instead of recovering; survivors' commit interval grows from ~1.9 s to ~60 s until the worker returns
+XFAIL tests/test_redteam_perf.py::test_pf04_accuracy_profile_keeps_a_backup_reducer - PF-04 / RT-28: §2 says each primary reducer has a deterministic backup and L4 relies on it, but the accuracy profile used for the selected run sets ELASTICML_HOKEA_REDUCER_REPLICAS=1
+=================== 3 passed, 2 xfailed, 1 warning in 9.74s ====================

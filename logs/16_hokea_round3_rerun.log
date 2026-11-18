@@ -1,0 +1,135 @@
+# Log 16: rerun of round-3 reducer and job-completion tests after fixing our test harness (reducer readiness wait, most-advanced-voter check), --runxfail
+# date: 2026-11-18T01:15:31Z
+# command: PYTHONPATH=src python -m pytest -v -s --runxfail hokea_tests/test_redteam_hokea_round3.py -k 'rt07 or rt08 or rt09 or rt19'
+
+# date: 2026-11-18T01:15:31Z
+============================= test session starts ==============================
+platform linux -- Python 3.14.6, pytest-8.4.2, pluggy-1.7.0 -- <repo>/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: <repo>
+configfile: pyproject.toml
+plugins: cov-6.3.0, anyio-4.16.0, hokea-0.1.0
+collecting ... collected 11 items / 7 deselected / 4 selected
+
+hokea_tests/test_redteam_hokea_round3.py::test_hk_rt07_wrong_shape_member_cannot_block_a_reducer_cell ELASTICML_REDTEAM {"event": "reducer_ready", "node": 4, "out": {"ready": true}}
+ELASTICML_REDTEAM {"event": "rt07_submit", "out": {"model_version": 0, "results": [["rt7w0:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt7w1:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt7w2:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt7w3:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt7w4:1", 422, "{\"detail\":{\"code\":\"invalid_gradient\",\"message\":\"gradient tensor sets and shapes must match within a reducer batch\"}}"]]}}
+ELASTICML_REDTEAM {"event": "rt07_honest_status_after_20s", "statuses": [["rt7w1:1", 500, "Internal Server Error"], ["rt7w2:1", 500, "Internal Server Error"], ["rt7w3:1", 500, "Internal Server Error"], ["rt7w4:1", 500, "Internal Server Error"]], "voter_version": 0}
+FAILED
+hokea_tests/test_redteam_hokea_round3.py::test_hk_rt08_rt10_int8_overflow_rejected_with_terminal_status ELASTICML_REDTEAM {"event": "reducer_ready", "node": 4, "out": {"ready": true}}
+ELASTICML_REDTEAM {"event": "rt08_submit", "out": {"model_version": 0, "results": [["rt8w0:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt8w1:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt8w2:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt8w3:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt8w4:1", 422, "{\"detail\":{\"code\":\"invalid_gradient\",\"message\":\"invalid or non-finite arrays\"}}"]]}}
+ELASTICML_REDTEAM {"event": "rt08_status_after_5s", "statuses": [["rt8w0:1", 500, "Internal Server Error"], ["rt8w1:1", 500, "Internal Server Error"], ["rt8w2:1", 500, "Internal Server Error"], ["rt8w3:1", 500, "Internal Server Error"], ["rt8w4:1", 500, "Internal Server Error"]], "voter_version": 0}
+FAILED
+hokea_tests/test_redteam_hokea_round3.py::test_hk_rt09_retry_at_backup_reducer_applies_once ELASTICML_REDTEAM {"event": "reducer_ready", "node": 4, "out": {"ready": true}}
+ELASTICML_REDTEAM {"event": "reducer_ready", "node": 5, "out": {"ready": true}}
+ELASTICML_REDTEAM {"event": "rt09_primary", "out": {"model_version": 0, "results": [["rt9w0:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w1:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w2:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w3:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w4:1", 200, "{\"status\":\"applied\",\"model_version\":1,\"aggregation_enabled\":true,\"model_b64\":\"UEsDBC0AAAAIAAAAIQCxdCm6//////////8QABQAbmV0LjAud2VpZ2h0Lm5weQEAEACAIAAAAAAAAAIeAA"]]}}
+ELASTICML_REDTEAM {"event": "rt09_after_primary", "version": 1}
+ELASTICML_REDTEAM {"event": "rt09_backup_retry", "out": {"model_version": 1, "results": [["rt9w0:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w1:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w2:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w3:1", 200, "{\"status\":\"pending\",\"model_version\":0,\"retry_after_seconds\":0.05,\"aggregation_enabled\":true}"], ["rt9w4:1", 200, "{\"status\":\"duplicate\",\"model_version\":1,\"aggregation_enabled\":true,\"model_b64\":\"UEsDBC0AAAAIAAAAIQCxdCm6//////////8QABQAbmV0LjAud2VpZ2h0Lm5weQEAEACAIAAAAAAAAAIe"]]}}
+ELASTICML_REDTEAM {"event": "rt09_final", "base": 0, "after_primary": 1, "final": 1}
+PASSED
+hokea_tests/test_redteam_hokea_round3.py::test_hk_rt19_workers_stop_after_the_job_completes ELASTICML_REDTEAM {"event": "rt19_job_complete", "reached": true, "versions": {"1": 6, "2": 0, "3": 0}}
+ELASTICML_REDTEAM {"event": "rt19_worker_processes_60s_after_completion", "running": {"4": ["/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-1-s7 --fault-seed 8 --coordinators http://node-1:8100,ht", "python -c \nimport json, os\nfound = []\nfor pid in os.listdir(\"/proc\"):\n    if pid.isdigit():\n        try:\n            cmd"], "5": ["/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-2-s7 --fault-seed 9 --coordinators http://node-1:8100,ht", "python -c \nimport json, os\nfound = []\nfor pid in os.listdir(\"/proc\"):\n    if pid.isdigit():\n        try:\n            cmd"], "6": ["/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-3-s7 --fault-seed 10 --coordinators http://node-1:8100,h", "python -c \nimport json, os\nfound = []\nfor pid in os.listdir(\"/proc\"):\n    if pid.isdigit():\n        try:\n            cmd"], "7": ["/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-4-s7 --fault-seed 11 --coordinators http://node-1:8100,h", "python -c \nimport json, os\nfound = []\nfor pid in os.listdir(\"/proc\"):\n    if pid.isdigit():\n        try:\n            cmd"], "8": ["/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-5-s7 --fault-seed 12 --coordinators http://node-1:8100,h", "python -c \nimport json, os\nfound = []\nfor pid in os.listdir(\"/proc\"):\n    if pid.isdigit():\n        try:\n            cmd"]}}
+FAILED
+
+=================================== FAILURES ===================================
+_________ test_hk_rt07_wrong_shape_member_cannot_block_a_reducer_cell __________
+
+cluster = <hokea.cluster.Cluster object at 0x7fe05acab8c0>
+
+    @pytest.mark.xfail(strict=True, reason="RT-07 on HOKEA: the reducer admits a wrong-shape member; "
+                       "the cell then never forms a batch and honest members stay pending")
+    def test_hk_rt07_wrong_shape_member_cannot_block_a_reducer_cell(cluster):
+        nodes = cluster.nodes()
+        reducer_ready(nodes[3])
+        base = version(nodes[0]) or 0
+        spec = dict(url="http://127.0.0.1:8101", members=members("rt7w", 5, base, ["wrong_shape"]))
+        log("rt07_submit", out=pod_run(nodes[3], INJECT, spec))
+        honest = [m["id"] for m in spec["members"][1:]]
+        statuses = None
+        for _ in range(10):
+            time.sleep(2)
+            statuses = pod_run(nodes[3], STATUS, dict(url="http://127.0.0.1:8101", ids=honest, base=base))
+        log("rt07_honest_status_after_20s", statuses=statuses, voter_version=version(nodes[0]))
+>       assert version(nodes[0]) > base, "honest members never committed"
+E       AssertionError: honest members never committed
+E       assert 0 > 0
+E        +  where 0 = version(<hokea.cluster.Node object at 0x7fe05acaba10>)
+
+hokea_tests/test_redteam_hokea_round3.py:305: AssertionError
+________ test_hk_rt08_rt10_int8_overflow_rejected_with_terminal_status _________
+
+cluster = <hokea.cluster.Cluster object at 0x7fe05a9b7610>
+
+    @pytest.mark.xfail(strict=True, reason="RT-08/RT-10 on HOKEA: the reducer admits an int8 scale "
+                       "overflow (finiteness checked before dequantisation) and then leaves members "
+                       "'pending' instead of passing on the voter's rejection")
+    def test_hk_rt08_rt10_int8_overflow_rejected_with_terminal_status(cluster):
+        nodes = cluster.nodes()
+        reducer_ready(nodes[3])
+        base = version(nodes[0]) or 0
+        spec = dict(url="http://127.0.0.1:8101", members=members("rt8w", 5, base, ["overflow_int8"]))
+        submitted = pod_run(nodes[3], INJECT, spec)
+        log("rt08_submit", out=submitted)
+        time.sleep(5)
+        statuses = pod_run(nodes[3], STATUS, dict(url="http://127.0.0.1:8101",
+                                                  ids=[m["id"] for m in spec["members"]], base=base))
+        log("rt08_status_after_5s", statuses=statuses, voter_version=version(nodes[0]))
+        first = submitted["results"][0]
+>       assert first[1] in (400, 413, 422), f"reducer admitted the overflow member: {first}"
+E       AssertionError: reducer admitted the overflow member: ['rt8w0:1', 200, '{"status":"pending","model_version":0,"retry_after_seconds":0.05,"aggregation_enabled":true}']
+E       assert 200 in (400, 413, 422)
+
+hokea_tests/test_redteam_hokea_round3.py:328: AssertionError
+______________ test_hk_rt19_workers_stop_after_the_job_completes _______________
+
+cluster = <hokea.cluster.Cluster object at 0x7fe05aa90510>
+
+    @pytest.mark.xfail(strict=True, reason="RT-19 on HOKEA: after max_job_updates the reducer reports "
+                       "'stale' instead of job_complete, so tree-mode worker processes keep running")
+    def test_hk_rt19_workers_stop_after_the_job_completes(cluster):
+        nodes = cluster.nodes()
+        # Non-proposing voters learn lazily (seen in this run: 6 / 0 / 0), so the
+        # job is complete when the most advanced voter reaches max_job_updates.
+        done = wait_until(lambda: max((version(n) or 0) for n in nodes[:3]) >= 6, 300)
+        log("rt19_job_complete", reached=bool(done), versions={n.index: version(n) for n in nodes[:3]})
+        assert done, "job never reached max_job_updates"
+        time.sleep(60)
+        running = {node.index: pod_run(node, PROCS, {}) for node in nodes[3:]}
+        log("rt19_worker_processes_60s_after_completion", running=running)
+>       assert not any(running.values()), running
+E       AssertionError: {4: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-1-s7 --fault-seed 8 --coordinators http://node-1:8100,ht', 'python -c 
+E         import json, os
+E         found = []
+E         for pid in os.listdir("/proc"):
+E             if pid.isdigit():
+E                 try:
+E                     cmd'], 5: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-2-s7 --fault-seed 9 --coordinators http://node-1:8100,ht', 'python -c 
+E         import json, os
+E         found = []
+E         for pid in os.listdir("/proc"):
+E             if pid.isdigit():
+E                 try:
+E                     cmd'], 6: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-3-s7 --fault-seed 10 --coordinators http://node-1:8100,h', 'python -c 
+E         import json, os
+E         found = []
+E         for pid in os.listdir("/proc"):
+E             if pid.isdigit():
+E                 try:
+E                     cmd'], 7: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-4-s7 --fault-seed 11 --coordinators http://node-1:8100,h', 'python -c 
+E         import json, os
+E         found = []
+E         for pid in os.listdir("/proc"):
+E             if pid.isdigit():
+E                 try:
+E                     cmd'], ...}
+E       assert not True
+E        +  where True = any(dict_values([['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-1-s7 --fault-seed 8 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-2-s7 --fault-seed 9 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-3-s7 --fault-seed 10 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-4-s7 --fault-seed 11 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-5-s7 --fault-seed 12 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd']]))
+E        +    where dict_values([['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-1-s7 --fault-seed 8 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-2-s7 --fault-seed 9 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-3-s7 --fault-seed 10 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-4-s7 --fault-seed 11 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-5-s7 --fault-seed 12 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd']]) = <built-in method values of dict object at 0x7fe05a9076c0>()
+E        +      where <built-in method values of dict object at 0x7fe05a9076c0> = {4: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-1-s7 --fault-seed 8 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], 5: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-2-s7 --fault-seed 9 --coordinators http://node-1:8100,ht', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], 6: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-3-s7 --fault-seed 10 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], 7: ['/usr/local/bin/python3.12 -m elasticml.worker --id hokea-worker-4-s7 --fault-seed 11 --coordinators http://node-1:8100,h', 'python -c \nimport json, os\nfound = []\nfor pid in os.listdir("/proc"):\n    if pid.isdigit():\n        try:\n            cmd'], ...}.values
+
+hokea_tests/test_redteam_hokea_round3.py:404: AssertionError
+=========================== short test summary info ============================
+FAILED hokea_tests/test_redteam_hokea_round3.py::test_hk_rt07_wrong_shape_member_cannot_block_a_reducer_cell
+FAILED hokea_tests/test_redteam_hokea_round3.py::test_hk_rt08_rt10_int8_overflow_rejected_with_terminal_status
+FAILED hokea_tests/test_redteam_hokea_round3.py::test_hk_rt19_workers_stop_after_the_job_completes
+============ 3 failed, 1 passed, 7 deselected in 179.94s (0:02:59) =============
+EXIT 1

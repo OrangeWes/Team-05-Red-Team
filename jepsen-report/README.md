@@ -120,7 +120,9 @@ voters 1, 2, 3:  model_version 1079 = processed_update_count 1079, identical lea
 
 Every voter ended with the same log and model, every acknowledged update was applied, and none was applied twice. The one `duplicate` is a client retry after an ambiguous 503 that had in fact been applied, which is exactly what S1 is for. Durable writes use `fsync` followed by a directory `fsync`. The problems are at the edges: the fault model, the reducer tier, the default deployment mode, and the state machine applied on top of the log.
 
-### 3.1 One rolled-back voter (S2)
+## 3.1 (Put a section title and a description underneath)
+
+### 3.1.1 One rolled-back voter (S2)
 
 §5 excludes corrupt or rolled-back durable state *for a majority*, so one voter's rollback is an included fault. Consider a voter whose disk is restored from a snapshot taken a moment earlier: a VM restore, a mis-ordered backup, or an operator copying `/data` back. It comes back with the same identity and process, and has simply forgotten its most recent promise and acceptance.
 
@@ -197,9 +199,9 @@ S5 promises that invalid input is rejected and leaves the model unchanged. Six i
 
 The common thread is that validation checks the encoded or per-tensor input, not the values that actually reach the optimizer. The specification never says the model must stay finite, and nothing enforces it.
 
-## 3.4 Liveness
+## 3.2 Liveness
 
-### 3.4.1 One worker crash stalls voter-side cohorts (L1)
+### 3.2.1 One worker crash stalls voter-side cohorts (L1)
 
 With four or fewer workers, the HOKEA default, voters aggregate the cohort themselves. A partial cohort is committed after 2 seconds, as long as at least half its members are present. The check runs *only inside the gradient POST handler*. Workers whose gradients are `pending` poll `/v1/updates/status`, which never flushes. Kill one worker, and nobody POSTs again:
 
@@ -237,19 +239,19 @@ node2: big → 200 pending;  u2 → 500;  u3 → 500        (client failover)
 {"event":"rt01_result","codes":[200,500,500,200,500,500],"versions":{"1":0,"2":0,"3":0}}
 ```
 
-### 3.4.3 Workers that never get a terminal answer
+### 3.2.3 Workers that never get a terminal answer
 
 A reducer ignores a voter's 422 or 429 reply, so its members stay `pending` forever (RT-10). When the job reaches `max_job_updates`, the voter returns 409 `job_complete`. The reducer translates that into `{"status":"stale","model_version":2}`, with a version it made up (base + 1), so workers in tree mode loop instead of stopping (RT-19). On HOKEA, with `max_job_updates = 6` and five workers, the job completed, and 60 seconds later every worker pod was still running its `elasticml.worker` process. A live worker that finishes 1.0 s into each round, against the default 0.75 s reducer flush, was answered `stale` in 6 of 6 rounds and never contributed (RT-18). §5 includes heterogeneous speed, but nothing in the specification promises a slow worker a turn.
 
-## 3.5 Performance
+## 3.3 Performance
 
-### 3.5.1 What the specification promises
+### 3.3.1 What the specification promises
 
 Nothing. §7 lists metrics to report: time to accuracy, examples and commits per second, pull-to-acknowledgement latency at p50 and p95, commit latency, recovery time, failover-to-next-commit time, CPU, memory and bytes. It then says performance results are "logged measurements from specific runs, not guarantees", that the 94.68% result is "not a confidence interval across hardware", and that the team does "not yet claim a speedup from adding workers".
 
 That is an honest position, but it leaves a system whose stated purpose is elastic training with no performance property anyone can check. A guarantee that training "continues" after a worker leaves (L1) is met by a cluster that commits once a minute. Every metric in §7 is named without a target, a reference configuration, or a comparison to beat. So we can't report a performance guarantee as violated. We can report which guarantees are missing, state the bound a reasonable reader would assume, and measure the system against it.
 
-### 3.5.2 Performance guarantees the specification does not make
+### 3.3.2 Performance guarantees the specification does not make
 
 | # | Missing guarantee | What a user would reasonably assume | What we measured | Test |
 |---|---|---|---|---|
@@ -269,7 +271,7 @@ That is an honest position, but it leaves a system whose stated purpose is elast
 | P14 | **Metric correctness.** "Unique committed examples" has no definition. | Unique means unique. | It counts exposures (2.44 M against a 55 k training set, RT-24). On HOKEA, the voter's `included_examples` rose faster than six one-core workers can compute. | RT-24, PH runs |
 | P15 | **Measurement isolation.** Held-out evaluation runs on voter 3, a voting replica. | Observation doesn't slow the system it measures. | The full-run harness evaluates on a voter, so every accuracy point costs voter CPU. Nothing in the specification separates observation load from the measured result. | — |
 
-### 3.5.3 Normalizing for hardware
+### 3.3.3 Normalizing for hardware
 
 The full 20-worker run needs 27 one-core containers: 3 voters, 20 workers and 4 reducers. Our host has 8 cores, so running it locally gives much worse results that say more about our laptop than about ElasticML. Rather than compare raw seconds, we normalize with one stated assumption.
 
@@ -287,7 +289,7 @@ time to 94% if compute-bound on reasonable hardware                →  ~251 s  
 
 So, if the class cluster's cores are like ours, roughly three quarters of the published run's 945 seconds were spent waiting rather than computing. The rest of this section uses HOKEA runs scaled down to 6 workers (9 containers on 8 cores), which our host can run without heavy oversubscription. We compare scenarios with each other at equal seed, and convert to compute fraction to compare with the published run.
 
-### 3.5.4 Equal-seed runs: healthy, churn, churn plus partition
+### 3.3.4 Equal-seed runs: healthy, churn, churn plus partition
 
 We ran the repository's own accuracy profile, as its full-run harness configures it: `fashion_cnn_v5`, AdamW with one-cycle learning rate at peak 0.006, int8 worker transport, float16 commits, a synchronous reducer cell with a 60-second flush, one reducer replica, and the published run's seed (50929546). We scaled it to 6 workers and ran three scenarios for 7 minutes each:
 
@@ -333,7 +335,7 @@ Two more observations came out of these runs.
 
 **Overcounting metrics (P14).** The voters' own `included_examples` counter reported 1,754 examples/s in the healthy run. Six one-core workers can compute at most about 1,530 examples/s, and commits × batch gives 559. The counter runs about 3.1× ahead of the examples that actually reached the optimizer. This is the same kind of inflation as the published 2.44 M "unique committed examples" (RT-24). A reader taking §7's examples-per-second at face value would overestimate useful throughput.
 
-## 3.6 Summery
+## 3.4 Summery
 
 The specification makes concrete, checkable statements about its own artifact. Several do not hold:
 

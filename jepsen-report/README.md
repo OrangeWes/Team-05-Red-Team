@@ -20,7 +20,7 @@ The published result is one physical-cluster run: 20 one-core workers, three vot
 
 ## 2 Test Design
 
-The MS3 specification is unusually explicit. Section 4 lists eight safety properties and four liveness properties, and says that each is a guarantee with automated tests:
+The MS3 specification has many guarantees for safety, liveness, and the fault model. Section 4 lists eight safety properties and four liveness properties, and says that each is a guarantee with automated tests:
 
 | | Property | Claim, paraphrased |
 |---|---|---|
@@ -50,7 +50,7 @@ The specification does not say which guarantees cover which deployment profile. 
 | Three voters, reducer tree, staleness 0 (selected profile) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Three voters, reducer tree, `allow_stale` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-A ✓ means the specification claims the property, as far as we can tell. That leaves several open questions. Does at-most-once hold when two reducers share an identity? Does "rollback of a majority" really mark the edge of what Paxos can tolerate? What does "training continues" mean when the reducer that a quarter of the workers depend on has no backup? And since §7 promises equal-seed comparisons across fault scenarios but publishes none, what happens to performance when workers actually leave?
+A ✓ means the specification claims the property, as far as we can tell. That leaves several open questions. What does "training continues" mean when the reducer that a quarter of the workers depend on has no backup? And since §7 promises equal-seed comparisons across fault scenarios but publishes none, what happens to performance when workers actually leave?
 
 Let's write some tests to find out.
 

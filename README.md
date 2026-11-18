@@ -8,7 +8,7 @@ A red-team analysis of the ElasticML MS3 specification and implementation: what 
 | [`gap-analysis/`](gap-analysis/) | Full specification gap analysis: per-property verdicts, every finding with code references, claim-by-claim checks, unstated values, observations, and the round-3 performance tables |
 | [`tests/`](tests/) | In-process red-team tests, Paxos schedule fuzzer, and performance calibration (pytest) |
 | [`hokea_tests/`](hokea_tests/) | Red-team, nemesis, churn and straggler tests that run on a local HOKEA Docker cluster |
-| [`logs/`](logs/) | Raw logs from every run |
+| [`logs/`](logs/) | Raw logs from every run; [`logs/README.md`](logs/README.md) maps each log to its command, tests and specification properties |
 | [`scripts/`](scripts/) | `plot_perf.py`, which regenerates the report's figures from `logs/14_hokea_perf.log` |
 
 ## Headline results
